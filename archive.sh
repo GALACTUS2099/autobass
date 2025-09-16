@@ -21,21 +21,3 @@ if [[ $# -ne 2 ]]; then
   print_help
   exit 1
 fi
-
-source="$1"
-target="$2"
-
-if [[ ! -d "$source" ]]; then
-  echo "Error: Source directory '$source' does not exist."
-  exit 1
-fi
-
-timestamp=$(date +"%Y%m%d_%H%M%S")
-backup="$target/backup_date"
-mkdir -p "$backup"
-
-echo "Backing up '$source' to '$backup'..."
-rsync -av --progress "$source/" "$backup/"
-echo "Backup complete."
-
-exit 0
