@@ -23,3 +23,21 @@ if [[ $# -ne 2 ]]; then
   print_help
   exit 1
 fi
+
+source="$1"
+target="$2"
+
+if [[ ! -d "$source" ]]; then
+    echo "Error: Source directory '$source' does not exist." >&2
+    exit 1
+fi
+
+timestamp=$(date +"%Y%m%d_%H%M%S")
+backup="${target}/backup_${timestamp}"
+
+
+if [[ ! -d "$target" ]]; then
+    echo "Error: Target directory '$target' does not exist." >&2
+    exit 1
+fi
+
