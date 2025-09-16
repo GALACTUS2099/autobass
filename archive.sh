@@ -41,3 +41,10 @@ if [[ ! -d "$target" ]]; then
     exit 1
 fi
 
+mkdir -p "$backup"
+
+echo "Backing up '$source' to '$backup'..."
+rsync -av --progress "$source"/ "$backup"
+echo "Backup complete."
+
+exit
