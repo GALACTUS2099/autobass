@@ -18,7 +18,7 @@ fi
 
 if [[ $# -ne 2 ]]; then
   echo "Error: Invalid number of arguments."
-  show_help
+  print_help
   exit 1
 fi
 
@@ -30,9 +30,9 @@ if [[ ! -d "$source" ]]; then
   exit 1
 fi
 
-timestamp=$(date)
+timestamp=$(date +"%Y%m%d_%H%M%S")
 backup="$target/backup_date"
-mkdir -p "backupdir"
+mkdir -p "$backup"
 
 echo "Backing up '$source' to '$backup'..."
 rsync -av --progress "$source/" "$backup/"
