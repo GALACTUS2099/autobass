@@ -33,26 +33,37 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     exit 0
 fi
 
-if [[ $# -ne 2 ]]; then
-  echo "ERROR: Invalid number of arguments."
-  print_help
-  exit 1
+
+config="./archive.conf"
+if [[ -f "$config" ]]; then
+    source "$config"
 fi
 
-source="$1"
-target="$2"
+if [[ $# -ge 1 ]]; then
+    source="$1"
+fi
+if [[ $# -ge 2 ]]; then
+    target="$2"
+fi
+
+if [[ -z "$source" || -z "$target" ]]; then
+    log "ERROR" "Source and target directories were not specified. Exiting."
+    exit 1
+fi
 
 log "INFO" "archive script started."
 
-if [[ ! -d "$source" || ! -r "$source"]]; then
-    log "ERROR" "Source directory '$source' does not exist." 
+if [[ ! -d "$source" || ! -r "$source" ]]; then
+    log "ERROR" "Source directory '$source' does not exist or is not readable. Exiting." 
     exit 1
 fi
 
 
 if [[ ! -d "$target" ]]; then
-    log "ERROR" "Target directory '$target' does not exist." 
-    exit 1
+    if ! mkdir -p "$target"; then
+        log "ERROR" "Target directory '$target' does not exist or could not be created. Exiting."
+        exit 1
+    fi
 fi
 
 timestamp=$(date +"%Y%m%d_%H%M%S")
