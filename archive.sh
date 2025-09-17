@@ -17,8 +17,6 @@ log(){
     fi
 }
 
-
-
 print_help(){
     echo "Usage: $0 [options] <source_directory> <target_directory>"
     echo "Creates a timestamped compressed archive of a source directory."
@@ -33,17 +31,30 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     exit 0
 fi
 
+dry_run=false
+index=()
+for arg in "$@"; do
+    case $arg in
+        -h|--help)
+            print_help
+            exit 0;;
+        -d|--dry-run)
+            dry_run=true;;
+        *)
+            index+=("$arg");;
+    esac
+done 
 
 config="./archive.conf"
 if [[ -f "$config" ]]; then
     source "$config"
 fi
 
-if [[ $# -ge 1 ]]; then
-    source="$1"
+if [[ ${#index[@]} -ge 1 ]]; then
+    source="${index[0]}"
 fi
-if [[ $# -ge 2 ]]; then
-    target="$2"
+if [[ ${#index[@]} -ge 2 ]]; then
+    target="${index[1]}"
 fi
 
 if [[ -z "$source" || -z "$target" ]]; then
@@ -69,15 +80,30 @@ fi
 timestamp=$(date +"%Y%m%d_%H%M%S")
 backup="${target}/backup_${timestamp}.tar.gz"
 
-log "INFO" "Backing up from $source to $backup."
-
-if tar -czf "$backup" -C "$(dirname "$source")" "$(basename "$source")"; then
-    log "INFO" "Backup created successfully."
-else
-    log "ERROR" "Failed to create backup."
-    exit 1
+ignore=".bassignore"
+ignore_args=()
+if [[ -f "$ignore" ]]; then
+    while IFS= read -r pattern || [[ -n "$pattern" ]]; do
+        ignore_args+=("--exclude=$pattern")
+    done < "$ignore"
 fi
 
+log "INFO" "Backing up from $source to $backup."
+
+if [[ "$dry_run" == true ]]; then
+    if ! tar -C "$source" --exclude-from="$ignore" -cf /dev/null -v .; then
+        log "ERROR" "Dry-run failed. Could not list backup contents."
+        exit 1
+    fi
+else
+    if tar -C "$source" --exclude-from="$ignore" -czf "$backup" .; then
+        log "INFO" "Backup created successfully."
+    else
+        log "ERROR" "Failed to create backup."
+        exit 1
+    fi
+
+fi
 # echo "Backing up '$source' to '$backup'..."
 # rsync -av --progress "$source"/ "$backup"
 # echo "Backup complete."
