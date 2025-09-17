@@ -4,9 +4,24 @@
 
 # This script creates a backup of a specified directory
 
+log_file="archive.log"
+log(){
+    local level="$1"
+    local message="$*"
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    line="${level}: [${timestamp}] ${message}"
+    if [[ "$level" == "ERROR" ]]; then
+        echo "$line" | tee -a "$log_file" >&2
+    else
+        echo "$line" | tee -a "$log_file"
+    fi
+}
+
+
+
 print_help(){
     echo "Usage: $0 [options] <source_directory> <target_directory>"
-    echo "Creates a timestamped backup of a source directory."
+    echo "Creates a timestamped compressed archive of a source directory."
     echo "Options:"
     echo "  -h, --help            Show this help message and exit."
     echo "  <source_directory>    The directory to be backed up."
@@ -19,7 +34,7 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
 fi
 
 if [[ $# -ne 2 ]]; then
-  echo "Error: Invalid number of arguments."
+  echo "ERROR: Invalid number of arguments."
   print_help
   exit 1
 fi
@@ -27,24 +42,33 @@ fi
 source="$1"
 target="$2"
 
-if [[ ! -d "$source" ]]; then
-    echo "Error: Source directory '$source' does not exist." >&2
+log "INFO" "archive script started."
+
+if [[ ! -d "$source" || ! -r "$source"]]; then
+    log "ERROR" "Source directory '$source' does not exist." 
+    exit 1
+fi
+
+
+if [[ ! -d "$target" ]]; then
+    log "ERROR" "Target directory '$target' does not exist." 
     exit 1
 fi
 
 timestamp=$(date +"%Y%m%d_%H%M%S")
-backup="${target}/backup_${timestamp}"
+backup="${target}/backup_${timestamp}.tar.gz"
 
+log "INFO" "Backing up from $source to $backup."
 
-if [[ ! -d "$target" ]]; then
-    echo "Error: Target directory '$target' does not exist." >&2
+if tar -czf "$backup" -C "$(dirname "$source")" "$(basename "$source")"; then
+    log "INFO" "Backup created successfully."
+else
+    log "ERROR" "Failed to create backup."
     exit 1
 fi
 
-mkdir -p "$backup"
+# echo "Backing up '$source' to '$backup'..."
+# rsync -av --progress "$source"/ "$backup"
+# echo "Backup complete."
 
-echo "Backing up '$source' to '$backup'..."
-rsync -av --progress "$source"/ "$backup"
-echo "Backup complete."
-
-exit
+exit 0
