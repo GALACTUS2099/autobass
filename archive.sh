@@ -48,6 +48,9 @@ done
 config="./archive.conf"
 if [[ -f "$config" ]]; then
     source "$config"
+else
+    log "ERROR" "Configuration file '$config' not found. Exiting."
+    exit 1
 fi
 
 if [[ ${#index[@]} -ge 1 ]]; then
