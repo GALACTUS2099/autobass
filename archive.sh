@@ -48,6 +48,10 @@ done
 config="./archive.conf"
 if [[ -f "$config" ]]; then
     source "$config"
+    if [[ -z "$source" || -z "$target" ]]; then
+        log "ERROR" "Source and target directories must be set in the configuration file '$config'. Exiting."
+        exit 1
+    fi
 else
     log "ERROR" "Configuration file '$config' not found. Exiting."
     exit 1
